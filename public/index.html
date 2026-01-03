@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Stylizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-5">
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl shadow-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-400">AI Image Stylizer</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm mb-1">Input Image</label>
+                <input type="file" id="fileInput" accept="image/*" class="w-full bg-gray-700 p-2 rounded">
+            </div>
+
+            <div>
+                <label class="block text-sm mb-1">Prompt (Ghibli, Anime, etc.)</label>
+                <textarea id="prompt" class="w-full bg-gray-700 p-2 rounded h-24" placeholder="Contoh: change to ghibli studio style"></textarea>
+            </div>
+
+            <button onclick="generate()" id="btn" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition">
+                Generate Image
+            </button>
+        </div>
+
+        <div id="loading" class="hidden mt-4 text-center text-yellow-400 animate-pulse">
+            Processing... (Bisa memakan waktu 1 menit)
+        </div>
+
+        <div id="result" class="mt-6 hidden">
+            <p class="text-sm mb-2 text-green-400">Hasil:</p>
+            <img id="resImg" src="" class="w-full rounded-lg shadow-lg">
+            <a id="downloadBtn" href="#" target="_blank" class="block mt-4 text-center text-sm text-blue-300 underline">Buka Gambar Fullsize</a>
+        </div>
+    </div>
+
+    <script>
+        async function generate() {
+            const fileInput = document.getElementById('fileInput');
+            const prompt = document.getElementById('prompt').value;
+            const btn = document.getElementById('btn');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+
+            if (!fileInput.files[0] || !prompt) return alert("Isi foto dan prompt!");
+
+            // Convert image to Base64
+            const reader = new FileReader();
+            reader.readAsDataURL(fileInput.files[0]);
+            reader.onload = async () => {
+                const base64 = reader.result;
+                
+                btn.disabled = true;
+                loading.classList.remove('hidden');
+                resultDiv.classList.add('hidden');
+
+                try {
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt, imageBase64: base64 })
+                    });
+
+                    const data = await response.json();
+                    if (data.status && data.result_url) {
+                        document.getElementById('resImg').src = data.result_url;
+                        document.getElementById('downloadBtn').href = data.result_url;
+                        resultDiv.classList.remove('hidden');
+                    } else {
+                        alert("Gagal: " + (data.msg || "Terjadi kesalahan"));
+                    }
+                } catch (e) {
+                    alert("Error: " + e.message);
+                } finally {
+                    btn.disabled = false;
+                    loading.classList.add('hidden');
+                }
+            };
+        }
+    </script>
+</body>
+</html>
