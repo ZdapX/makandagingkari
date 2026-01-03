@@ -3,103 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio - Text & Image</title>
+    <title>AI Image Generator - No Limit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    </style>
 </head>
-<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-gray-900 border border-gray-800 p-6 rounded-3xl shadow-2xl">
-        <h1 class="text-2xl font-bold text-center text-blue-500 mb-6">AI Image Generator</h1>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-        <!-- Mode Switcher -->
-        <div class="flex gap-2 mb-6 bg-gray-800 p-1 rounded-2xl">
-            <button onclick="setMode('text')" id="tabText" class="flex-1 py-2 rounded-xl text-sm font-bold bg-blue-600">Text to Image</button>
-            <button onclick="setMode('image')" id="tabImage" class="flex-1 py-2 rounded-xl text-sm font-bold text-gray-400">Image to Image</button>
+    <div class="max-w-xl w-full glass p-8 rounded-[2.5rem] shadow-2xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">AI IMAGE MAGIC</h1>
+            <p class="text-slate-400 text-sm mt-2">Tanpa Login • Tanpa OTP • Unlimited</p>
         </div>
 
-        <div class="space-y-4">
-            <!-- Upload Foto (Hanya muncul di mode Image) -->
-            <div id="uploadBox" class="hidden">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Foto Referensi</label>
-                <input type="file" id="file" accept="image/*" class="w-full bg-gray-800 border border-gray-700 p-2 rounded-xl text-xs">
-            </div>
-
-            <!-- Prompt -->
+        <div class="space-y-5">
+            <!-- Input Prompt -->
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Prompt (Perintah)</label>
-                <textarea id="prompt" class="w-full bg-gray-800 border border-gray-700 p-4 rounded-2xl text-sm h-32 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Contoh: A beautiful girl in ghibli style..."></textarea>
+                <label class="text-xs font-bold text-slate-500 uppercase ml-1">Deskripsi Gambar (Prompt)</label>
+                <textarea id="prompt" class="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl h-32 mt-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="Contoh: A futuristic city in Mars, cinematic lighting, 8k, cyberpunk style..."></textarea>
             </div>
 
-            <button id="genBtn" onclick="generate()" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-bold transition flex items-center justify-center gap-2">
-                <i class="fas fa-magic"></i> Generate
+            <!-- Pilihan Model -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Model AI</label>
+                    <select id="model" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl mt-2 text-sm outline-none">
+                        <option value="flux">Flux (Terbaik)</option>
+                        <option value="turbo">Turbo (Cepat)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Rasio</label>
+                    <select id="ratio" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl mt-2 text-sm outline-none">
+                        <option value="1024x1024">1:1 Square</option>
+                        <option value="1280x720">16:9 Wide</option>
+                        <option value="720x1280">9:16 Portrait</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tombol Generate -->
+            <button id="genBtn" onclick="generate()" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 py-4 rounded-2xl font-bold text-lg shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-3">
+                <i class="fas fa-wand-sparkles"></i>
+                <span>Generate Image</span>
             </button>
         </div>
 
-        <!-- Status -->
-        <div id="loading" class="hidden mt-6 text-center">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-2"></div>
-            <p class="text-xs text-blue-400 font-medium">Memproses... (Bisa 30-60 detik)</p>
+        <!-- Progress -->
+        <div id="loader" class="hidden mt-10 text-center space-y-4">
+            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
+            <p class="text-blue-400 text-sm font-medium animate-pulse">Menghubungkan ke Neural Network...</p>
         </div>
 
         <!-- Hasil -->
-        <div id="result" class="hidden mt-8">
-            <img id="resImg" src="" class="w-full rounded-2xl border border-gray-800">
-            <a id="dlLink" href="#" target="_blank" class="block text-center mt-4 text-sm text-blue-500 hover:underline">Download Gambar</a>
+        <div id="result" class="hidden mt-10 space-y-4 animate-in fade-in duration-700">
+            <div class="relative group">
+                <img id="resImg" src="" class="w-full rounded-3xl border border-slate-700 shadow-2xl">
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl">
+                    <p class="text-white text-xs">Klik link di bawah untuk simpan</p>
+                </div>
+            </div>
+            <a id="dlLink" href="#" target="_blank" class="flex items-center justify-center gap-2 text-blue-400 hover:text-white text-sm font-bold transition">
+                <i class="fas fa-download"></i> Download Original Quality
+            </a>
         </div>
     </div>
 
     <script>
-        let mode = 'text';
-
-        function setMode(m) {
-            mode = m;
-            document.getElementById('tabText').className = m === 'text' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-blue-600' : 'flex-1 py-2 rounded-xl text-sm font-bold text-gray-400';
-            document.getElementById('tabImage').className = m === 'image' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-blue-600' : 'flex-1 py-2 rounded-xl text-sm font-bold text-gray-400';
-            document.getElementById('uploadBox').classList.toggle('hidden', m === 'text');
-        }
-
         async function generate() {
             const prompt = document.getElementById('prompt').value;
-            const file = document.getElementById('file').files[0];
+            const model = document.getElementById('model').value;
+            const ratio = document.getElementById('ratio').value;
             const btn = document.getElementById('genBtn');
-            const loading = document.getElementById('loading');
+            const loader = document.getElementById('loader');
             const result = document.getElementById('result');
 
-            if (!prompt) return alert("Isi prompt!");
+            if (!prompt) return alert("Isi promptnya dulu!");
 
+            // UI State
             btn.disabled = true;
-            loading.classList.remove('hidden');
+            btn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> Generating...`;
+            loader.classList.remove('hidden');
             result.classList.add('hidden');
 
-            let base64 = null;
-            if (mode === 'image' && file) {
-                base64 = await new Promise(r => {
-                    const reader = new FileReader();
-                    reader.onload = () => r(reader.result);
-                    reader.readAsDataURL(file);
-                });
-            }
+            const [width, height] = ratio.split('x');
 
             try {
-                const res = await fetch('/api/generate', {
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode, prompt, imageBase64: base64 })
+                    body: JSON.stringify({ 
+                        prompt, 
+                        width: parseInt(width), 
+                        height: parseInt(height),
+                        model: model 
+                    })
                 });
 
-                const data = await res.json();
+                const data = await response.json();
+
                 if (data.status) {
-                    document.getElementById('resImg').src = data.result_url;
-                    document.getElementById('dlLink').href = data.result_url;
-                    result.classList.remove('hidden');
+                    const resImg = document.getElementById('resImg');
+                    resImg.src = data.result_url;
+                    
+                    // Kita tunggu gambar benar-benar termuat di browser
+                    resImg.onload = () => {
+                        document.getElementById('dlLink').href = data.result_url;
+                        result.classList.remove('hidden');
+                        loader.classList.add('hidden');
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fas fa-magic"></i> Generate Image`;
+                    };
                 } else {
                     alert("Error: " + data.msg);
                 }
-            } catch (e) {
-                alert("Server Timeout (Batas Vercel 10s). Jika ini terjadi, gunakan VPS karena scraping butuh waktu lama.");
-            } finally {
+            } catch (err) {
+                alert("Gagal terhubung ke server.");
                 btn.disabled = false;
-                loading.classList.add('hidden');
+                btn.innerHTML = `Generate Image`;
+                loader.classList.add('hidden');
             }
         }
     </script>
