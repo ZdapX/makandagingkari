@@ -3,127 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator - No Limit</title>
+    <title>AI Image No-Key</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-6">
 
-    <div class="max-w-xl w-full glass p-8 rounded-[2.5rem] shadow-2xl">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">AI IMAGE MAGIC</h1>
-            <p class="text-slate-400 text-sm mt-2">Tanpa Login • Tanpa OTP • Unlimited</p>
-        </div>
+    <div class="max-w-md w-full bg-gray-900 p-8 rounded-[2rem] border border-gray-800 shadow-2xl">
+        <h1 class="text-2xl font-black text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            FREE AI GEN
+        </h1>
+        <p class="text-center text-[10px] text-gray-500 uppercase tracking-widest mb-8 font-bold">No API Key • No Limit • Fast</p>
 
-        <div class="space-y-5">
-            <!-- Input Prompt -->
-            <div>
-                <label class="text-xs font-bold text-slate-500 uppercase ml-1">Deskripsi Gambar (Prompt)</label>
-                <textarea id="prompt" class="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl h-32 mt-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="Contoh: A futuristic city in Mars, cinematic lighting, 8k, cyberpunk style..."></textarea>
-            </div>
-
-            <!-- Pilihan Model -->
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Model AI</label>
-                    <select id="model" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl mt-2 text-sm outline-none">
-                        <option value="flux">Flux (Terbaik)</option>
-                        <option value="turbo">Turbo (Cepat)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Rasio</label>
-                    <select id="ratio" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl mt-2 text-sm outline-none">
-                        <option value="1024x1024">1:1 Square</option>
-                        <option value="1280x720">16:9 Wide</option>
-                        <option value="720x1280">9:16 Portrait</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Tombol Generate -->
-            <button id="genBtn" onclick="generate()" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 py-4 rounded-2xl font-bold text-lg shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-3">
-                <i class="fas fa-wand-sparkles"></i>
-                <span>Generate Image</span>
+        <div class="space-y-4">
+            <textarea id="prompt" class="w-full bg-black border border-gray-800 p-4 rounded-2xl h-32 outline-none focus:border-blue-500 transition-all text-sm" placeholder="Contoh: kucing lucu pakai kacamata hitam di pantai..."></textarea>
+            
+            <button onclick="generate()" id="btn" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-bold transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                GENERATE IMAGE
             </button>
         </div>
 
-        <!-- Progress -->
-        <div id="loader" class="hidden mt-10 text-center space-y-4">
-            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
-            <p class="text-blue-400 text-sm font-medium animate-pulse">Menghubungkan ke Neural Network...</p>
+        <!-- Loading -->
+        <div id="loader" class="hidden mt-8 text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-2"></div>
+            <p class="text-xs text-gray-400">Sedang menggambar... (±10 detik)</p>
         </div>
 
-        <!-- Hasil -->
-        <div id="result" class="hidden mt-10 space-y-4 animate-in fade-in duration-700">
-            <div class="relative group">
-                <img id="resImg" src="" class="w-full rounded-3xl border border-slate-700 shadow-2xl">
-                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl">
-                    <p class="text-white text-xs">Klik link di bawah untuk simpan</p>
-                </div>
-            </div>
-            <a id="dlLink" href="#" target="_blank" class="flex items-center justify-center gap-2 text-blue-400 hover:text-white text-sm font-bold transition">
-                <i class="fas fa-download"></i> Download Original Quality
-            </a>
+        <!-- Result -->
+        <div id="result" class="hidden mt-8 space-y-4">
+            <img id="resImg" src="" class="w-full rounded-2xl border border-gray-800 shadow-xl">
+            <a id="dl" href="#" download="ai-image.jpg" class="block text-center text-xs text-blue-500 font-bold hover:underline">SIMPAN KE GALERI</a>
         </div>
     </div>
 
     <script>
         async function generate() {
             const prompt = document.getElementById('prompt').value;
-            const model = document.getElementById('model').value;
-            const ratio = document.getElementById('ratio').value;
-            const btn = document.getElementById('genBtn');
+            const btn = document.getElementById('btn');
             const loader = document.getElementById('loader');
             const result = document.getElementById('result');
 
-            if (!prompt) return alert("Isi promptnya dulu!");
+            if (!prompt) return alert("Ketik sesuatu dulu!");
 
-            // UI State
             btn.disabled = true;
-            btn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> Generating...`;
+            btn.innerText = "SABAR YAA...";
             loader.classList.remove('hidden');
             result.classList.add('hidden');
-
-            const [width, height] = ratio.split('x');
 
             try {
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt, 
-                        width: parseInt(width), 
-                        height: parseInt(height),
-                        model: model 
-                    })
+                    body: JSON.stringify({ prompt })
                 });
 
                 const data = await response.json();
 
                 if (data.status) {
-                    const resImg = document.getElementById('resImg');
-                    resImg.src = data.result_url;
-                    
-                    // Kita tunggu gambar benar-benar termuat di browser
-                    resImg.onload = () => {
-                        document.getElementById('dlLink').href = data.result_url;
-                        result.classList.remove('hidden');
-                        loader.classList.add('hidden');
-                        btn.disabled = false;
-                        btn.innerHTML = `<i class="fas fa-magic"></i> Generate Image`;
-                    };
+                    document.getElementById('resImg').src = data.result_url;
+                    document.getElementById('dl').href = data.result_url;
+                    result.classList.remove('hidden');
                 } else {
-                    alert("Error: " + data.msg);
+                    alert(data.msg);
                 }
-            } catch (err) {
-                alert("Gagal terhubung ke server.");
+            } catch (e) {
+                alert("Gagal terhubung. Coba lagi.");
+            } finally {
                 btn.disabled = false;
-                btn.innerHTML = `Generate Image`;
+                btn.innerText = "GENERATE IMAGE";
                 loader.classList.add('hidden');
             }
         }
