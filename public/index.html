@@ -3,49 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image No-Key</title>
+    <title>AI Multi-Key Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #0a0a0a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
 </head>
-<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-6">
+<body class="min-h-screen flex items-center justify-center p-6 text-sm">
 
-    <div class="max-w-md w-full bg-gray-900 p-8 rounded-[2rem] border border-gray-800 shadow-2xl">
-        <h1 class="text-2xl font-black text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            FREE AI GEN
-        </h1>
-        <p class="text-center text-[10px] text-gray-500 uppercase tracking-widest mb-8 font-bold">No API Key • No Limit • Fast</p>
+    <div class="max-w-md w-full glass p-8 rounded-[2.5rem] shadow-2xl relative">
+        <!-- Tombol Settings -->
+        <button onclick="toggleSettings()" class="absolute top-6 right-6 text-zinc-500 hover:text-white transition">
+            <i class="fas fa-cog text-xl"></i>
+        </button>
+
+        <h1 class="text-2xl font-black text-center mb-1 text-white">AI GENERATOR</h1>
+        <p class="text-center text-[10px] text-zinc-500 font-bold tracking-widest uppercase mb-8">Multi-Key Management System</p>
 
         <div class="space-y-4">
-            <textarea id="prompt" class="w-full bg-black border border-gray-800 p-4 rounded-2xl h-32 outline-none focus:border-blue-500 transition-all text-sm" placeholder="Contoh: kucing lucu pakai kacamata hitam di pantai..."></textarea>
+            <textarea id="prompt" class="w-full bg-zinc-900/50 border border-zinc-800 p-5 rounded-3xl h-32 outline-none focus:border-blue-500 transition-all leading-relaxed" placeholder="Tulis imajinasimu di sini..."></textarea>
             
-            <button onclick="generate()" id="btn" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-bold transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                GENERATE IMAGE
+            <button onclick="generate()" id="btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-magic"></i> GENERATE
             </button>
         </div>
 
-        <!-- Loading -->
-        <div id="loader" class="hidden mt-8 text-center">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-2"></div>
-            <p class="text-xs text-gray-400">Sedang menggambar... (±10 detik)</p>
+        <!-- Result -->
+        <div id="loader" class="hidden mt-8 text-center animate-pulse">
+            <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Processing Image...</p>
         </div>
 
-        <!-- Result -->
         <div id="result" class="hidden mt-8 space-y-4">
-            <img id="resImg" src="" class="w-full rounded-2xl border border-gray-800 shadow-xl">
-            <a id="dl" href="#" download="ai-image.jpg" class="block text-center text-xs text-blue-500 font-bold hover:underline">SIMPAN KE GALERI</a>
+            <img id="resImg" src="" class="w-full rounded-3xl border border-zinc-800 shadow-2xl">
+            <div id="keyStatus" class="text-[9px] text-center text-zinc-600 font-bold uppercase"></div>
+            <a id="dl" href="#" download="ai-art.jpg" class="block text-center text-blue-500 font-bold hover:underline">Download Image</a>
+        </div>
+    </div>
+
+    <!-- Modal Settings -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden p-6 z-50">
+        <div class="max-w-sm w-full bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] shadow-2xl">
+            <h2 class="text-lg font-bold mb-2">API Key Settings</h2>
+            <p class="text-zinc-500 text-[11px] mb-4 text-justify">Masukkan banyak API Key (satu per baris). Sistem akan mengacak kunci yang digunakan untuk menghindari limit.</p>
+            
+            <textarea id="keyStorage" class="w-full bg-black border border-zinc-800 p-4 rounded-2xl h-48 outline-none focus:border-blue-500 text-xs text-blue-400 font-mono" placeholder="Masukkan Key Disini...&#10;Key1&#10;Key2&#10;Key3"></textarea>
+            
+            <div class="flex gap-2 mt-4">
+                <button onclick="saveKeys()" class="flex-1 bg-white text-black font-bold py-3 rounded-xl text-xs hover:bg-zinc-200 transition">SIMPAN</button>
+                <button onclick="toggleSettings()" class="flex-1 bg-zinc-800 text-white font-bold py-3 rounded-xl text-xs hover:bg-zinc-700 transition">TUTUP</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // Load keys from LocalStorage on Startup
+        window.onload = () => {
+            const savedKeys = localStorage.getItem('pollinations_keys');
+            if (savedKeys) {
+                document.getElementById('keyStorage').value = savedKeys;
+            }
+        };
+
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function saveKeys() {
+            const keys = document.getElementById('keyStorage').value;
+            localStorage.setItem('pollinations_keys', keys);
+            alert("API Keys berhasil disimpan ke browser!");
+            toggleSettings();
+        }
+
         async function generate() {
             const prompt = document.getElementById('prompt').value;
             const btn = document.getElementById('btn');
             const loader = document.getElementById('loader');
             const result = document.getElementById('result');
+            const keyStatus = document.getElementById('keyStatus');
 
-            if (!prompt) return alert("Ketik sesuatu dulu!");
+            if (!prompt) return alert("Prompt tidak boleh kosong!");
+
+            // Ambil keys dari localStorage dan ubah ke array
+            const rawKeys = localStorage.getItem('pollinations_keys') || "";
+            const keyArray = rawKeys.split('\n').filter(k => k.trim() !== "");
 
             btn.disabled = true;
-            btn.innerText = "SABAR YAA...";
+            btn.innerHTML = `<i class="fas fa-spinner animate-spin"></i> GENERATING...`;
             loader.classList.remove('hidden');
             result.classList.add('hidden');
 
@@ -53,7 +100,7 @@
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({ prompt, keys: keyArray })
                 });
 
                 const data = await response.json();
@@ -61,15 +108,16 @@
                 if (data.status) {
                     document.getElementById('resImg').src = data.result_url;
                     document.getElementById('dl').href = data.result_url;
+                    keyStatus.innerText = data.using_key ? `Mode: Priority (API Key Active)` : `Mode: Free (No Key Provided)`;
                     result.classList.remove('hidden');
                 } else {
                     alert(data.msg);
                 }
             } catch (e) {
-                alert("Gagal terhubung. Coba lagi.");
+                alert("Connection error.");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "GENERATE IMAGE";
+                btn.innerHTML = `<i class="fas fa-magic"></i> GENERATE`;
                 loader.classList.add('hidden');
             }
         }
