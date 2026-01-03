@@ -2,36 +2,38 @@
 const axios = require("axios");
 
 module.exports = async (req, res) => {
+    // Header CORS agar bisa diakses frontend
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ msg: 'Method Not Allowed' });
 
-    const { prompt, width, height, seed, model } = req.body;
-
-    if (!prompt) return res.status(400).json({ status: false, msg: "Prompt harus diisi" });
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ status: false, msg: "Prompt kosong!" });
 
     try {
-        // Membersihkan prompt dari karakter aneh
-        const cleanPrompt = encodeURIComponent(prompt);
-        const randomSeed = seed || Math.floor(Math.random() * 999999);
-        const w = width || 1024;
-        const h = height || 1024;
-        
-        // Kita gunakan Pollinations AI (Tanpa Auth, Tanpa Cloudflare)
-        // Mendukung berbagai model: flux, realism, anime, dll
-        const imageUrl = `https://pollinations.ai/p/${cleanPrompt}?width=${w}&height=${h}&seed=${randomSeed}&model=${model || 'flux'}&nologo=true`;
+        const seed = Math.floor(Math.random() * 1000000);
+        // Kita pakai model 'flux' karena paling bagus dan cepat
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&model=flux&nologo=true`;
 
-        // Kita kirimkan URL gambarnya ke frontend
-        res.status(200).json({ 
-            status: true, 
-            result_url: imageUrl,
-            info: { prompt, seed: randomSeed, model: model || 'flux' }
+        // Backend mendownload gambar (Proses ini biasanya 5-10 detik)
+        const response = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+            timeout: 15000 // Batas nunggu 15 detik
+        });
+
+        // Ubah hasil download menjadi Base64
+        const base64 = Buffer.from(response.data, 'binary').toString('base64');
+        const finalImage = `data:image/jpeg;base64,${base64}`;
+
+        res.status(200).json({
+            status: true,
+            result_url: finalImage
         });
 
     } catch (error) {
-        res.status(500).json({ status: false, msg: error.message });
+        console.error(error.message);
+        res.status(500).json({ status: false, msg: "Server AI sedang penuh, coba lagi klik Generate." });
     }
 };
