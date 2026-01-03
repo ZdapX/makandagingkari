@@ -1,128 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio - Text & Image</title>
+    <title>AI Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-slate-900 text-white min-h-screen p-4 flex items-center justify-center font-sans">
-
-    <div class="max-w-xl w-full bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700">
-        <h1 class="text-2xl font-bold text-center mb-6 text-blue-400"><i class="fas fa-bolt"></i> AI Image Generator</h1>
-
-        <!-- Mode Selector -->
-        <div class="flex bg-slate-900 rounded-xl p-1 mb-6">
-            <button onclick="setMode('text')" id="tabText" class="flex-1 py-2 rounded-lg font-bold transition bg-blue-600 text-white">Text to Image</button>
-            <button onclick="setMode('image')" id="tabImage" class="flex-1 py-2 rounded-lg font-bold transition text-slate-400">Image to Image</button>
+<body class="bg-gray-950 text-white flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-lg bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-2xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-500">AI Studio</h1>
+        
+        <div class="flex mb-6 bg-gray-800 p-1 rounded-xl">
+            <button onclick="changeMode('text')" id="btnText" class="flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold transition">Text to Image</button>
+            <button onclick="changeMode('image')" id="btnImage" class="flex-1 py-2 rounded-lg text-gray-400 font-bold transition">Image to Image</button>
         </div>
 
-        <div class="space-y-4">
-            <!-- Image Input (Hidden by default) -->
-            <div id="imageInputArea" class="hidden">
-                <label class="block text-sm font-medium mb-2 text-slate-400">Upload Reference Image:</label>
-                <input type="file" id="fileInput" accept="image/*" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-lg text-sm">
-            </div>
-
-            <!-- Prompt Input -->
-            <div>
-                <label class="block text-sm font-medium mb-2 text-slate-400">Prompt / Perintah:</label>
-                <textarea id="prompt" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl h-28 focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Contoh: A cyberpunk city in 2077, cinematic lighting..."></textarea>
-            </div>
-
-            <button onclick="generate()" id="btnGen" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold text-lg transition shadow-lg flex items-center justify-center gap-2">
-                <i class="fas fa-wand-magic-sparkles"></i> Generate
-            </button>
+        <div id="imageInput" class="hidden mb-4">
+            <label class="block text-sm mb-2 text-gray-400">Pilih Foto Referensi:</label>
+            <input type="file" id="file" class="w-full bg-gray-800 p-2 rounded-lg text-sm border border-gray-700">
         </div>
 
-        <!-- Result Section -->
-        <div id="loader" class="hidden mt-8 text-center space-y-3">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="text-blue-400 text-sm animate-pulse">Proses sedang berjalan (±60 detik)...</p>
+        <div class="mb-6">
+            <label class="block text-sm mb-2 text-gray-400">Instruksi AI (Prompt):</label>
+            <textarea id="prompt" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none h-32" placeholder="Contoh: Seorang astronot naik kuda di bulan, gaya cyberpunk..."></textarea>
         </div>
 
-        <div id="result" class="hidden mt-8 space-y-4">
-            <img id="resImg" src="" class="w-full rounded-2xl border border-slate-600 shadow-xl">
-            <a id="resLink" href="#" target="_blank" class="block text-center text-blue-400 text-sm hover:underline">Download Original Quality</a>
+        <button onclick="generate()" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-bold transition flex items-center justify-center gap-2">
+            Mulai Buat Gambar
+        </button>
+
+        <div id="status" class="hidden mt-6 text-center text-blue-400 animate-pulse text-sm font-medium">
+            Proses ini memakan waktu ±1 menit. Jangan tutup halaman ini...
+        </div>
+
+        <div id="result" class="hidden mt-8">
+            <img id="resImg" src="" class="w-full rounded-2xl border border-gray-700 shadow-lg">
+            <a id="download" href="#" target="_blank" class="block text-center mt-4 text-sm text-blue-400 hover:underline underline-offset-4">Buka Resolusi Penuh</a>
         </div>
     </div>
 
     <script>
-        let currentMode = 'text';
+        let mode = 'text';
 
-        function setMode(mode) {
-            currentMode = mode;
-            const tabText = document.getElementById('tabText');
-            const tabImage = document.getElementById('tabImage');
-            const imageArea = document.getElementById('imageInputArea');
-
-            if (mode === 'text') {
-                tabText.className = "flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white";
-                tabImage.className = "flex-1 py-2 rounded-lg font-bold text-slate-400";
-                imageArea.classList.add('hidden');
-            } else {
-                tabImage.className = "flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white";
-                tabText.className = "flex-1 py-2 rounded-lg font-bold text-slate-400";
-                imageArea.classList.remove('hidden');
-            }
+        function changeMode(m) {
+            mode = m;
+            document.getElementById('imageInput').className = m === 'image' ? 'block mb-4' : 'hidden';
+            document.getElementById('btnText').className = m === 'text' ? 'flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold transition' : 'flex-1 py-2 rounded-lg text-gray-400 font-bold transition';
+            document.getElementById('btnImage').className = m === 'image' ? 'flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold transition' : 'flex-1 py-2 rounded-lg text-gray-400 font-bold transition';
         }
 
         async function generate() {
             const prompt = document.getElementById('prompt').value;
-            const fileInput = document.getElementById('fileInput');
-            const btn = document.getElementById('btnGen');
-            const loader = document.getElementById('loader');
+            const file = document.getElementById('file').files[0];
+            const btn = document.getElementById('submitBtn');
+            const status = document.getElementById('status');
             const result = document.getElementById('result');
 
-            if (!prompt) return alert("Prompt tidak boleh kosong!");
+            if (!prompt) return alert("Prompt harus diisi!");
 
             btn.disabled = true;
-            btn.innerText = "Processing...";
-            loader.classList.remove('hidden');
+            btn.innerText = "Sedang Menghubungi Server...";
+            status.classList.remove('hidden');
             result.classList.add('hidden');
 
-            let imageBase64 = null;
-
-            if (currentMode === 'image' && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.readAsDataURL(fileInput.files[0]);
-                reader.onload = () => sendData(reader.result);
-            } else {
-                sendData(null);
+            let base64 = null;
+            if (mode === 'image' && file) {
+                base64 = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(file);
+                });
             }
 
-            async function sendData(imgData) {
-                try {
-                    const response = await fetch('/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ mode: currentMode, prompt, imageBase64: imgData })
-                    });
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode, prompt, imageBase64: base64 })
+                });
 
-                    // Cek jika response bukan JSON (Timeout Vercel)
-                    const text = await response.text();
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch (e) {
-                        throw new Error("Vercel Timeout atau Server Error. Coba prompt yang lebih pendek.");
-                    }
-
-                    if (data.status) {
-                        document.getElementById('resImg').src = data.result_url;
-                        document.getElementById('resLink').href = data.result_url;
-                        result.classList.remove('hidden');
-                    } else {
-                        alert("Gagal: " + data.msg);
-                    }
-                } catch (err) {
-                    alert(err.message);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = "Generate";
-                    loader.classList.add('hidden');
+                const data = await res.json();
+                if (data.status) {
+                    document.getElementById('resImg').src = data.result_url;
+                    document.getElementById('download').href = data.result_url;
+                    result.classList.remove('hidden');
+                } else {
+                    alert("Error: " + data.msg);
                 }
+            } catch (e) {
+                alert("Server Timeout (Batas Vercel 10 detik terlampaui). Coba lagi beberapa saat lagi.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Mulai Buat Gambar";
+                status.classList.add('hidden');
             }
         }
     </script>
